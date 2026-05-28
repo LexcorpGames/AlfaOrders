@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Alfa Industries — Work Orders</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#F4F2ED;--surface:#FFFFFF;--surface2:#F8F7F4;--border:#E2DFD8;--border2:#CBC8C0;
+  --text:#1A1917;--text2:#6B6860;--text3:#9B9890;
+  --accent:#2B5CE6;--accent-bg:#EEF2FD;--accent-text:#1A3FA3;
+  --success:#1A7A4A;--success-bg:#E8F5EE;
+  --warn:#9A6000;--warn-bg:#FEF3DC;
+  --danger:#C0392B;--danger-bg:#FDEDED;
+  --purple:#5B3FC8;--purple-bg:#F0ECFD;
+  --teal:#0D7A6A;--teal-bg:#E5F5F2;
+  --radius:8px;--radius-lg:12px;
+  --shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.08);
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;min-height:100vh;}
+.shell{display:flex;min-height:100vh;}
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
+.main{flex:1;overflow-x:hidden;}
+.sidebar-brand{padding:20px 18px 14px;border-bottom:1px solid var(--border);}
+.brand-name{font-size:15px;font-weight:600;letter-spacing:-.2px;}
+.brand-sub{font-size:11px;color:var(--text3);margin-top:1px;font-family:'DM Mono',monospace;}
+.sidebar-nav{padding:10px 8px;flex:1;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text2);font-weight:400;border:none;background:none;width:100%;text-align:left;transition:background .15s,color .15s;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-bg);color:var(--accent-text);font-weight:500;}
+.nav-icon{width:16px;height:16px;opacity:.7;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;}
+.sidebar-footer{padding:12px 8px;border-top:1px solid var(--border);}
+.sync-status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);padding:6px 10px;border-radius:var(--radius);margin-top:6px;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);flex-shrink:0;}
+.sync-dot.ok{background:var(--success);}
+.sync-dot.syncing{background:var(--warn);animation:pulse 1s infinite;}
+.sync-dot.err{background:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+.topbar-title{font-size:16px;font-weight:600;}
+.topbar-actions{display:flex;gap:8px;align-items:center;}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:opacity .15s,transform .1s;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{opacity:.9;}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{background:var(--surface2);color:var(--text);}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid #f5c6c2;}
+.btn-danger:hover{opacity:.85;}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+.badge-active{background:var(--accent-bg);color:var(--accent-text);}
+.badge-done{background:var(--success-bg);color:var(--success);}
+.badge-pending{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.badge-urgent{background:var(--danger-bg);color:var(--danger);}
+.badge-high{background:var(--warn-bg);color:var(--warn);}
+.badge-blend{background:var(--purple-bg);color:var(--purple);}
+.badge-stock{background:var(--success-bg);color:var(--success);}
+.badge-batch{background:var(--teal-bg);color:var(--teal);}
+.badge-buy{background:var(--warn-bg);color:var(--warn);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow);}
+.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-body{padding:18px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:20px 24px 0;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;}
+.stat-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;}
+.stat-val{font-size:26px;font-weight:600;letter-spacing:-.5px;line-height:1;}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--surface2);}
+td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.order-link{font-weight:500;color:var(--accent);cursor:pointer;font-size:13px;}
+.order-link:hover{text-decoration:underline;}
+.stage-track{display:flex;align-items:center;gap:0;min-width:160px;}
+.sdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sline{height:2px;flex:1;min-width:6px;}
+.sdot-done{background:var(--success);}
+.sline-done{background:var(--success);opacity:.3;}
+.sdot-active{background:var(--accent);}
+.sdot-pending{background:var(--border2);}
+.sline-pending{background:var(--border);}
+.stage-txt{font-size:11px;margin-left:6px;white-space:nowrap;color:var(--text2);}
+.stage-txt-active{color:var(--accent);font-weight:500;}
+.stage-txt-done{color:var(--success);}
+.page{display:none;}
+.page.active{display:block;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group.full{grid-column:1/-1;}
+label{font-size:12px;font-weight:500;color:var(--text2);}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface);outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:60px;}
+.items-table{width:100%;border-collapse:collapse;margin-top:8px;}
+.items-table th{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding:6px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.items-table td{padding:6px 8px;border-bottom:1px solid var(--border);}
+.items-table tr:last-child td{border-bottom:none;}
+.items-table input,.items-table select{padding:5px 7px;font-size:12px;}
+.remove-row{background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;}
+.remove-row:hover{background:var(--danger-bg);}
+.detail-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.detail-field{background:var(--surface2);border-radius:var(--radius);padding:10px 12px;}
+.detail-field-label{font-size:11px;color:var(--text3);margin-bottom:2px;}
+.detail-field-val{font-size:13px;font-weight:500;}
+.item-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:10px;overflow:hidden;}
+.item-card:last-child{margin-bottom:0;}
+.item-card-head{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;}
+.item-card-body{padding:0 14px 12px;}
+.item-name{font-size:14px;font-weight:500;}
+.notes-area{background:var(--surface2);border-top:1px solid var(--border);padding:10px 14px;}
+.note-list{margin-bottom:8px;}
+.note-entry{display:flex;gap:8px;margin-bottom:6px;align-items:flex-start;}
+.note-avatar{width:22px;height:22px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.note-bubble{background:var(--surface);border:1px solid var(--border);border-radius:0 var(--radius) var(--radius) var(--radius);padding:5px 10px;font-size:12px;flex:1;}
+.note-time{font-size:10px;color:var(--text3);margin-top:2px;}
+.note-input-row{display:flex;gap:6px;}
+.note-input-row input{flex:1;font-size:12px;padding:6px 10px;}
+.note-send{padding:6px 12px;font-size:12px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-family:'DM Sans',sans-serif;font-weight:500;}
+.note-send:hover{opacity:.9;}
+.item-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+.expand-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:13px;padding:2px 5px;border-radius:4px;transition:transform .2s,color .15s;line-height:1;display:inline-flex;align-items:center;}
+.expand-btn:hover{color:var(--accent);}
+.expand-btn.open{transform:rotate(90deg);color:var(--accent);}
+.products-row>td{padding:0!important;}
+.products-panel{display:none;background:var(--surface2);border-top:1px solid var(--border);}
+.products-panel.open{display:block;}
+.products-panel-inner{padding:8px 14px 10px 36px;}
+.product-line{display:grid;grid-template-columns:1fr 80px 160px 1fr;align-items:center;gap:10px;padding:5px 0;border-bottom:0.5px solid var(--border);font-size:12px;}
+.product-line:last-child{border-bottom:none;}
+.product-line-name{font-weight:500;color:var(--text);}
+.product-line-qty{color:var(--text2);}
+.product-line-remark{color:var(--text3);font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.filter-bar{display:flex;gap:8px;align-items:center;padding:14px 24px;border-bottom:1px solid var(--border);}
+.search-wrap{position:relative;flex:1;max-width:280px;}
+.search-wrap input{padding-left:30px;}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:13px;font-weight:500;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .2s;pointer-events:none;z-index:100;}
+.toast.show{opacity:1;transform:translateY(0);}
+.empty{text-align:center;padding:48px 24px;color:var(--text3);}
+.empty-title{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:4px;}
+.setup-banner{background:var(--warn-bg);border:1px solid #f0d8a0;border-radius:var(--radius-lg);padding:14px 18px;margin:20px 24px 0;display:flex;gap:12px;align-items:flex-start;}
+.setup-banner.hidden{display:none;}
+.setup-banner-body{flex:1;}
+.setup-banner h3{font-size:13px;font-weight:600;color:var(--warn);margin-bottom:4px;}
+.setup-banner p{font-size:12px;color:var(--warn);line-height:1.6;}
+.setup-banner input{margin-top:8px;width:100%;padding:7px 10px;border:1px solid #d4a830;border-radius:var(--radius);font-size:12px;background:#fffdf5;color:var(--text);outline:none;}
+.setup-banner input:focus{border-color:var(--accent);}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;align-items:center;justify-content:center;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:90%;max-width:500px;box-shadow:var(--shadow-md);}
+.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.modal-header h2{font-size:15px;font-weight:600;}
+.modal-body{padding:20px;}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.close-btn{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);}
+@media(max-width:700px){
+  .sidebar{display:none;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .form-grid{grid-template-columns:1fr;}
+  .detail-grid{grid-template-columns:1fr 1fr;}
+}
+@media print{
+  .sidebar,.topbar,.no-print{display:none!important;}
+  .shell{display:block;}
+  .main{overflow:visible;}
+  .page{display:none!important;}
+  #page-summary{display:block!important;padding:0;}
+  body{background:#fff;font-size:12px;}
+  .print-card{break-inside:avoid;page-break-inside:avoid;}
+  .summary-print-header{margin-bottom:16px;}
+  @page{margin:15mm 15mm 15mm 15mm;size:A4;}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-name">Alfa Industries</div>
+      <div class="brand-sub">Work Order System</div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showPage('orders')" id="nav-orders">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 5h6M5 8h6M5 11h4"/></svg>
+        All orders
+        <span class="nav-badge" id="nav-count">0</span>
+      </button>
+      <button class="nav-item" onclick="showPage('new')" id="nav-new">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v6M5 8h6"/></svg>
+        New order
+      </button>
+      <button class="nav-item" onclick="showPage('summary')" id="nav-summary">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 5h6M5 8h4"/><circle cx="11" cy="11" r="2.5"/><path d="M12.5 12.5l1.5 1.5"/></svg>
+        Active summary
+      </button>
+      <button class="nav-item" onclick="manualSync()" style="margin-top:4px;">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 8A5 5 0 103 8"/><path d="M13 5v3h-3"/></svg>
+        Sync now
+      </button>
+      <button class="nav-item" onclick="showPage('debug')" id="nav-debug" style="margin-top:4px;">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        Debug
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <span class="sync-dot" id="sync-dot"></span>
+        <span id="sync-label">Not configured</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);padding:2px 10px 0;">Factory Manager</div>
+    </div>
+  </aside>
+
+  <div class="main">
+
+    <!-- ORDERS LIST -->
+    <div class="page active" id="page-orders">
+      <div class="topbar">
+        <div class="topbar-title">Work orders</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="manualSync()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 8A5 5 0 103 8"/><path d="M13 5v3h-3"/></svg>
+            Sync
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="showPage('new')">+ New order</button>
+        </div>
+      </div>
+
+      <div class="setup-banner" id="setup-banner">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#9A6000" stroke-width="1.5" style="flex-shrink:0;margin-top:2px"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 10.5v.5"/></svg>
+        <div class="setup-banner-body">
+          <h3>Connect to Google Sheets for multi-device sync</h3>
+          <p>Paste your Google Apps Script Web App URL below. See <strong>SETUP.md</strong> for step-by-step instructions.</p>
+          <input type="text" id="script-url-input" placeholder="https://script.google.com/macros/s/YOUR_ID/exec"/>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-primary btn-sm" onclick="saveScriptUrl()">Save &amp; connect</button>
+            <button class="btn btn-ghost btn-sm" onclick="dismissBanner()">Use offline only</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row" id="stats-row"></div>
+
+      <div class="filter-bar" style="margin-top:16px;">
+        <div class="search-wrap">
+          <span class="search-icon">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5l2.5 2.5"/></svg>
+          </span>
+          <input type="text" placeholder="Search orders…" id="search-input" oninput="renderOrdersTable()"/>
+        </div>
+        <select id="filter-status" onchange="renderOrdersTable()" style="width:auto;padding:7px 10px;">
+          <option value="">All status</option>
+          <option value="Active">Active</option>
+          <option value="Pending">Pending</option>
+          <option value="Done">Done</option>
+        </select>
+        <select id="filter-priority" onchange="renderOrdersTable()" style="width:auto;padding:7px 10px;">
+          <option value="">All priority</option>
+          <option value="Urgent">Urgent</option>
+          <option value="High">High</option>
+          <option value="Normal">Normal</option>
+        </select>
+      </div>
+
+      <div style="padding:16px 24px;">
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th></th>
+                <th>Order ID</th><th>Customer</th><th>Order date</th><th>Est. delivery</th>
+                <th>Items</th><th>Priority</th><th>Overall stage</th><th>Status</th><th></th>
+              </tr></thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW ORDER -->
+    <div class="page" id="page-new">
+      <div class="topbar">
+        <div class="topbar-title">New work order</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="showPage('orders')">Cancel</button>
+        </div>
+      </div>
+      <div style="padding:24px;max-width:780px;">
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header"><span style="font-weight:500;font-size:13px;">Order details</span></div>
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group"><label>Customer name *</label><input type="text" id="f-customer" placeholder="e.g. Reliance Industries Ltd."/></div>
+              <div class="form-group"><label>Transporter</label><input type="text" id="f-transporter" placeholder="e.g. Blue Dart Logistics"/></div>
+              <div class="form-group"><label>Order date</label><input type="date" id="f-date"/></div>
+              <div class="form-group"><label>Estimated delivery date</label><input type="date" id="f-delivery"/></div>
+              <div class="form-group"><label>Priority</label>
+                <select id="f-priority"><option>Normal</option><option>High</option><option>Urgent</option></select>
+              </div>
+              <div class="form-group full"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Any instructions for this order…"></textarea></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-header">
+            <span style="font-weight:500;font-size:13px;">Products</span>
+            <button class="btn btn-ghost btn-sm" onclick="addItemRow()">+ Add product</button>
+          </div>
+          <div class="card-body" style="padding:12px 18px;">
+            <table class="items-table">
+              <thead><tr><th>Product name</th><th>Quantity</th><th>Unit</th><th>Remark</th><th></th></tr></thead>
+              <tbody id="items-tbody"></tbody>
+            </table>
+            <button class="btn btn-ghost btn-sm" style="margin-top:10px;" onclick="addItemRow()">+ Add product</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn btn-ghost" onclick="showPage('orders')">Cancel</button>
+          <button class="btn btn-primary" onclick="saveOrder()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l4 4 6-6"/></svg>
+            Create work order
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDER DETAIL -->
+    <div class="page" id="page-detail">
+      <div class="topbar">
+        <div class="topbar-title" id="detail-topbar-title">Order detail</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="showPage('orders')">← Back</button>
+          <button class="btn btn-danger btn-sm" id="detail-delete-btn">Delete order</button>
+        </div>
+      </div>
+      <div style="padding:24px;" id="detail-body"></div>
+    </div>
+
+  </div>
+</div>
+
+    <!-- DEBUG PAGE -->
+    <div class="page" id="page-debug">
+      <div class="topbar">
+        <div class="topbar-title">Debug — Sync Inspector</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="manualSync();showPage('debug');">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 8A5 5 0 103 8"/><path d="M13 5v3h-3"/></svg>
+            Sync &amp; refresh
+          </button>
+        </div>
+      </div>
+      <div id="debug-body" style="padding:24px;"></div>
+    </div>
+
+    <!-- SUMMARY PAGE -->
+    <div class="page" id="page-summary">
+      <div class="topbar no-print">
+        <div class="topbar-title">Active orders summary</div>
+        <div class="topbar-actions">
+          <button class="btn btn-ghost btn-sm" onclick="window.print()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="1" width="10" height="5" rx="1"/><rect x="3" y="10" width="10" height="5" rx="1"/><path d="M3 6H1v5h2M13 6h2v5h-2"/></svg>
+            Print / Save PDF
+          </button>
+        </div>
+      </div>
+      <div id="summary-body" style="padding:24px;"></div>
+    </div>
+
+
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STAGES=['Order received','Stock check','Recipe & blend','Bagged','Dispatched'];
+const AVAIL=['Ready stock','Needs blending','Needs batch','Buy from outside'];
+const AVAIL_BADGE=['badge-stock','badge-blend','badge-batch','badge-buy'];
+
+let orders=JSON.parse(localStorage.getItem('alfa_orders')||'[]');
+let scriptUrl=localStorage.getItem('alfa_script_url')||'';
+let currentOrderId=null;
+let newItemRows=[];
+let syncInProgress=false;
+
+function saveLocal(){localStorage.setItem('alfa_orders',JSON.stringify(orders));}
+function toast(msg,dur=2400){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur);}
+function genId(){return'WO-'+new Date().getFullYear()+'-'+String(Date.now()).slice(-4);}
+function fmtDate(d){
+  if(!d) return '—';
+  try{
+    // Extract YYYY-MM-DD regardless of whether it's a plain date, ISO timestamp, or Date string
+    const str = String(d).trim();
+    const match = str.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if(match){
+      const months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return parseInt(match[3])+' '+months[parseInt(match[2])-1]+' '+match[1];
+    }
+    return str;
+  }catch{return String(d);}
+}
+function setSyncStatus(state,label){
+  document.getElementById('sync-dot').className='sync-dot'+(state?' '+state:'');
+  document.getElementById('sync-label').textContent=label;
+}
+
+/* ---- BANNER ---- */
+function initBanner(){
+  if(scriptUrl||localStorage.getItem('alfa_banner_dismissed')){
+    document.getElementById('setup-banner').classList.add('hidden');
+    if(scriptUrl) setSyncStatus('ok','Connected');
+  }
+  if(scriptUrl) document.getElementById('script-url-input').value=scriptUrl;
+}
+function saveScriptUrl(){
+  const val=document.getElementById('script-url-input').value.trim();
+  if(!val||!val.startsWith('https://')){toast('Please enter a valid URL');return;}
+  scriptUrl=val;localStorage.setItem('alfa_script_url',scriptUrl);
+  document.getElementById('setup-banner').classList.add('hidden');
+  setSyncStatus('ok','Connected');toast('Connected! Syncing…');
+  syncFromSheet();
+}
+function dismissBanner(){
+  localStorage.setItem('alfa_banner_dismissed','1');
+  document.getElementById('setup-banner').classList.add('hidden');
+  setSyncStatus('','Offline only');
+}
+
+/* ---- SYNC ---- */
+let lastRawSyncData = null; // stored for debug inspection
+
+async function syncFromSheet(){
+  if(!scriptUrl||syncInProgress)return;
+  syncInProgress=true;setSyncStatus('syncing','Syncing…');
+  try{
+    const res=await fetch(scriptUrl+'?action=getAll');
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const data=await res.json();
+    if(data.error)throw new Error(data.error);
+
+    // Store raw response for debug panel
+    lastRawSyncData = data.orders||[];
+    console.log('[Alfa Sync] Raw orders from sheet:', JSON.stringify(lastRawSyncData, null, 2));
+    (lastRawSyncData).forEach(o=>{
+      console.log(`[Alfa Sync] Order ${o.id} — date raw: "${o.date}" (type: ${typeof o.date}), deliveryDate raw: "${o.deliveryDate}" (type: ${typeof o.deliveryDate})`);
+    });
+
+    mergeFromRemote(lastRawSyncData);
+    localStorage.setItem('alfa_last_sync',new Date().toISOString());
+    setSyncStatus('ok','Synced just now');
+    renderStats();renderOrdersTable();
+    if(currentOrderId)renderDetail();
+    renderDebugPanel();
+  }catch(e){setSyncStatus('err','Sync failed');toast('Sync error: '+e.message,3500);}
+  finally{syncInProgress=false;}
+}
+async function pushToSheet(order){
+  if(!scriptUrl)return;
+  try{
+    await fetch(scriptUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'upsert',order})});
+  }catch(e){toast('Saved locally — sheet sync failed',3000);}
+}
+async function deleteFromSheet(orderId){
+  if(!scriptUrl)return;
+  try{await fetch(scriptUrl,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'delete',orderId})});}catch(e){}
+}
+function mergeFromRemote(remoteOrders){
+  remoteOrders.forEach(remote=>{
+    const idx=orders.findIndex(o=>o.id===remote.id);
+    if(idx===-1){orders.unshift(remote);}
+    else{
+      const local=orders[idx];
+      const localTs=new Date(local.updatedAt||local.createdAt||0).getTime();
+      const remoteTs=new Date(remote.updatedAt||remote.createdAt||0).getTime();
+      if(remoteTs>localTs+5000){orders[idx]=remote;}
+    }
+  });
+  saveLocal();
+}
+function manualSync(){
+  if(!scriptUrl){toast('Set up Google Sheets URL first');document.getElementById('setup-banner').classList.remove('hidden');return;}
+  toast('Syncing…');syncFromSheet();
+}
+
+/* ---- ORDER HELPERS ---- */
+function orderStatus(o){
+  if(!o.items||!o.items.length)return'Pending';
+  if(o.items.every(it=>it.stage>=STAGES.length-1))return'Done';
+  if(o.items.every(it=>it.stage===0))return'Pending';
+  return'Active';
+}
+function overallStage(o){
+  if(!o.items||!o.items.length)return 0;
+  return Math.min(...o.items.map(it=>it.stage));
+}
+function stageTrackHtml(stage){
+  let h='<div class="stage-track">';
+  STAGES.forEach((s,i)=>{
+    const done=i<stage,active=i===stage;
+    h+=`<span class="sdot ${done?'sdot-done':active?'sdot-active':'sdot-pending'}"></span>`;
+    if(i<STAGES.length-1)h+=`<span class="sline ${done?'sline-done':'sline-pending'}"></span>`;
+  });
+  const lbl=stage>=STAGES.length?'stage-txt-done':stage>0?'stage-txt-active':'';
+  h+=`<span class="stage-txt ${lbl}">${STAGES[Math.min(stage,STAGES.length-1)]}</span></div>`;
+  return h;
+}
+function statusBadgeHtml(s){
+  if(s==='Done')return'<span class="badge badge-done">Done</span>';
+  if(s==='Active')return'<span class="badge badge-active">Active</span>';
+  return'<span class="badge badge-pending">Pending</span>';
+}
+function priorityBadgeHtml(p){
+  if(p==='Urgent')return'<span class="badge badge-urgent">Urgent</span>';
+  if(p==='High')return'<span class="badge badge-high">High</span>';
+  return'<span class="badge badge-pending">Normal</span>';
+}
+
+/* ---- PAGES ---- */
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(name==='orders'){document.getElementById('nav-orders').classList.add('active');renderOrdersTable();renderStats();}
+  else if(name==='new'){document.getElementById('nav-new').classList.add('active');initNewForm();}
+  else if(name==='summary'){document.getElementById('nav-summary').classList.add('active');renderSummary();}
+  else if(name==='debug'){document.getElementById('nav-debug').classList.add('active');renderDebugPanel();}
+}
+
+function renderDebugPanel(){
+  const el=document.getElementById('debug-body');
+  if(!el)return;
+  const lastSync=localStorage.getItem('alfa_last_sync');
+  const raw=lastRawSyncData;
+
+  let h=`
+  <div style="margin-bottom:16px;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:4px;">Last sync: <span style="color:var(--accent)">${lastSync||'Never'}</span></div>
+    <div style="font-size:12px;color:var(--text2);">This page shows exactly what the Google Sheet returned — raw, before any formatting. Use this to diagnose date issues.</div>
+  </div>`;
+
+  if(!raw){
+    h+=`<div style="background:var(--warn-bg);border:1px solid #f0d8a0;border-radius:var(--radius);padding:12px 16px;font-size:13px;color:var(--warn);">No sync data yet. Click "Sync &amp; refresh" above to pull data from the sheet.</div>`;
+    el.innerHTML=h;return;
+  }
+
+  h+=`<div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;">${raw.length} orders received from sheet</div>`;
+
+  h+=`<div class="card">
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Order ID</th>
+          <th>date (raw)</th>
+          <th>date type</th>
+          <th>deliveryDate (raw)</th>
+          <th>deliveryDate type</th>
+          <th>Formatted date</th>
+          <th>Formatted delivery</th>
+        </tr></thead>
+        <tbody>
+          ${raw.map((o,i)=>{
+            const rowBg=i%2===1?'background:var(--surface2)':'';
+            const dateType=typeof o.date;
+            const delivType=typeof o.deliveryDate;
+            const dateFmt=fmtDate(o.date);
+            const delivFmt=fmtDate(o.deliveryDate);
+            const dateOk=o.date&&String(o.date).match(/^\d{4}-\d{2}-\d{2}$/)?'✅':'⚠️';
+            const delivOk=!o.deliveryDate||String(o.deliveryDate).match(/^\d{4}-\d{2}-\d{2}$/)?'✅':'⚠️';
+            return`<tr style="${rowBg}">
+              <td style="font-weight:500;font-size:12px;">${o.id}</td>
+              <td style="font-family:'Courier New',monospace;font-size:11px;color:var(--purple);">${dateOk} "${o.date}"</td>
+              <td style="font-size:11px;color:var(--text2);">${dateType}</td>
+              <td style="font-family:'Courier New',monospace;font-size:11px;color:var(--purple);">${delivOk} "${o.deliveryDate}"</td>
+              <td style="font-size:11px;color:var(--text2);">${delivType}</td>
+              <td style="font-size:12px;color:var(--success);">${dateFmt}</td>
+              <td style="font-size:12px;color:var(--success);">${delivFmt}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+
+  h+=`<div style="margin-top:20px;">
+    <div style="font-size:13px;font-weight:500;margin-bottom:8px;">What to look for</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;font-size:12px;line-height:2;color:var(--text2);">
+      <div>✅ <strong>Good:</strong> date raw shows <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">"2024-05-14"</code> and type is <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">string</code></div>
+      <div>⚠️ <strong>Problem:</strong> date raw shows <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">"Mon May 13 2024..."</code> or type is <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">object</code> — this means Google Sheets returned a Date object and timezone shifted it</div>
+      <div>⚠️ <strong>Problem:</strong> date raw shows <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">""</code> or <code style="background:var(--surface2);padding:1px 5px;border-radius:3px;">"undefined"</code> — date was lost during sync</div>
+      <div style="margin-top:6px;color:var(--text3);">Full raw JSON is also logged in browser console (F12 → Console) for deeper inspection.</div>
+    </div>
+  </div>`;
+
+  el.innerHTML=h;
+}
+
+
+  const active=orders.filter(o=>orderStatus(o)!=='Done');
+  const now=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'});
+  const urgentCount=active.filter(o=>o.priority==='Urgent').length;
+  const totalItems=active.reduce((s,o)=>s+(o.items?o.items.length:0),0);
+  const doneItems=active.reduce((s,o)=>s+(o.items?o.items.filter(it=>it.stage>=STAGES.length-1).length:0),0);
+
+  let h=`
+  <div class="summary-print-header" style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #1A1917;">
+    <div>
+      <div style="font-size:22px;font-weight:700;letter-spacing:-.3px;">Alfa Industries</div>
+      <div style="font-size:14px;color:var(--text2);margin-top:2px;">Active Orders Summary</div>
+    </div>
+    <div style="text-align:right;font-size:12px;color:var(--text2);">
+      <div>Generated: ${now}</div>
+      <div style="margin-top:2px;">${active.length} active order${active.length!==1?'s':''} &nbsp;·&nbsp; ${totalItems} products &nbsp;·&nbsp; ${doneItems} dispatched</div>
+    </div>
+  </div>`;
+
+  if(urgentCount>0){
+    h+=`<div style="background:var(--danger-bg);border:1px solid #f5c6c2;border-radius:var(--radius);padding:8px 14px;margin-bottom:16px;font-size:12px;color:var(--danger);font-weight:500;">
+      ⚠ ${urgentCount} urgent order${urgentCount!==1?'s':''} require immediate attention
+    </div>`;
+  }
+
+  if(!active.length){
+    h+=`<div class="empty"><div class="empty-title">No active orders</div><div>All orders are completed or no orders exist yet.</div></div>`;
+    document.getElementById('summary-body').innerHTML=h;return;
+  }
+
+  // Sort: Urgent first, then High, then Normal
+  const priorityOrder={Urgent:0,High:1,Normal:2};
+  const sorted=[...active].sort((a,b)=>(priorityOrder[a.priority]||2)-(priorityOrder[b.priority]||2));
+
+  sorted.forEach(o=>{
+    const st=orderStatus(o);
+    const doneCount=o.items.filter(it=>it.stage>=STAGES.length-1).length;
+    const progress=o.items.length?Math.round((doneCount/o.items.length)*100):0;
+
+    h+=`<div class="print-card" style="border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:14px;overflow:hidden;">
+      <!-- Order header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2);border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;font-weight:600;">${o.id}</span>
+          <span style="font-size:13px;color:var(--text2);">${o.customer}</span>
+          ${priorityBadgeHtml(o.priority)}
+        </div>
+        <div style="display:flex;gap:16px;align-items:center;font-size:11px;color:var(--text2);">
+          ${o.transporter?`<span>🚚 ${o.transporter}</span>`:''}
+          ${o.deliveryDate?`<span>📅 Due: <strong style="color:var(--text)">${fmtDate(o.deliveryDate)}</strong></span>`:''}
+          <span>${doneCount}/${o.items.length} dispatched</span>
+          <div style="width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div style="width:${progress}%;height:100%;background:${progress===100?'var(--success)':'var(--accent)'};border-radius:3px;"></div>
+          </div>
+        </div>
+      </div>
+      <!-- Products table -->
+      <div style="padding:0 14px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px 7px 0;text-align:left;">Product</th>
+              <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px;text-align:left;">Qty</th>
+              <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px;text-align:left;">Availability</th>
+              <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px;text-align:left;">Stage</th>
+              <th style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:7px 6px;text-align:left;">Remark</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${o.items.map((it,idx)=>{
+              const stageLbl=STAGES[Math.min(it.stage,STAGES.length-1)];
+              const stageColor=it.stage>=STAGES.length-1?'var(--success)':it.stage>0?'var(--accent)':'var(--text3)';
+              const availLbl=it.avail===null?'—':AVAIL[it.avail];
+              const rowBg=idx%2===1?'background:var(--surface2);':'';
+              return`<tr style="${rowBg}border-bottom:0.5px solid var(--border);">
+                <td style="padding:7px 6px 7px 0;font-size:12px;font-weight:500;">${it.name}</td>
+                <td style="padding:7px 6px;font-size:12px;color:var(--text2);">${it.qty}</td>
+                <td style="padding:7px 6px;font-size:11px;">${availLbl!=='—'?`<span style="font-size:10px;font-weight:500;padding:1px 7px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);">${availLbl}</span>`:'<span style="color:var(--text3);">—</span>'}</td>
+                <td style="padding:7px 6px;font-size:12px;font-weight:500;color:${stageColor};">${stageLbl}</td>
+                <td style="padding:7px 6px;font-size:11px;color:var(--text3);font-style:italic;">${it.remark||'—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${o.orderNotes?`<div style="padding:7px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--warn);background:var(--warn-bg);">📝 ${o.orderNotes}</div>`:''}
+    </div>`;
+  });
+
+  h+=`<div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);text-align:center;">
+    Alfa Industries — Work Order System &nbsp;·&nbsp; Printed ${now} &nbsp;·&nbsp; ${active.length} active orders
+  </div>`;
+
+  document.getElementById('summary-body').innerHTML=h;
+}
+function renderStats(){
+  const t=orders.length,a=orders.filter(o=>orderStatus(o)==='Active').length,
+    d=orders.filter(o=>orderStatus(o)==='Done').length,u=orders.filter(o=>o.priority==='Urgent').length;
+  document.getElementById('nav-count').textContent=t;
+  document.getElementById('stats-row').innerHTML=`
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-val">${t}</div></div>
+    <div class="stat-card"><div class="stat-label">Active</div><div class="stat-val" style="color:var(--accent)">${a}</div></div>
+    <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-val" style="color:var(--success)">${d}</div></div>
+    <div class="stat-card"><div class="stat-label">Urgent</div><div class="stat-val" style="color:var(--danger)">${u}</div></div>`;
+}
+function renderOrdersTable(){
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  const fs=document.getElementById('filter-status').value;
+  const fp=document.getElementById('filter-priority').value;
+  const filtered=orders.filter(o=>{
+    if(fs&&orderStatus(o)!==fs)return false;
+    if(fp&&o.priority!==fp)return false;
+    if(q&&!o.customer.toLowerCase().includes(q)&&!o.id.toLowerCase().includes(q))return false;
+    return true;
+  });
+  const tb=document.getElementById('orders-tbody');
+  if(!filtered.length){tb.innerHTML=`<tr><td colspan="10"><div class="empty"><div class="empty-title">No orders found</div><div>Create a new work order to get started</div></div></td></tr>`;return;}
+  tb.innerHTML=filtered.map(o=>{
+    const productLines=(o.items||[]).map(it=>{
+      const stageLabel=STAGES[Math.min(it.stage,STAGES.length-1)];
+      const stageCss=it.stage>=STAGES.length-1?'color:var(--success);font-weight:500;':it.stage>0?'color:var(--accent);font-weight:500;':'color:var(--text3);';
+      const availLabel=it.avail===null?'—':AVAIL[it.avail];
+      return`<div class="product-line">
+        <span class="product-line-name">${it.name}</span>
+        <span class="product-line-qty">${it.qty}</span>
+        <span style="font-size:11px;${stageCss}">${stageLabel}</span>
+        <span class="product-line-remark">${it.remark?'📝 '+it.remark:availLabel!=='—'?availLabel:''}</span>
+      </div>`;
+    }).join('');
+    return`<tr class="order-main-row">
+      <td style="width:32px;padding:12px 6px 12px 14px;">
+        <button class="expand-btn" id="expbtn-${o.id}" onclick="toggleProducts('${o.id}')" title="Show products">▶</button>
+      </td>
+      <td><span class="order-link" onclick="openDetail('${o.id}')">${o.id}</span></td>
+      <td style="font-size:13px;">${o.customer}</td>
+      <td style="font-size:12px;color:var(--text2);">${fmtDate(o.date)}</td>
+      <td style="font-size:12px;color:var(--text2);">${fmtDate(o.deliveryDate)}</td>
+      <td style="font-size:13px;">${o.items?o.items.length:0} item${o.items&&o.items.length!==1?'s':''}</td>
+      <td>${priorityBadgeHtml(o.priority)}</td>
+      <td>${stageTrackHtml(overallStage(o))}</td>
+      <td>${statusBadgeHtml(orderStatus(o))}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="openDetail('${o.id}')">Open →</button></td>
+    </tr>
+    <tr class="products-row">
+      <td colspan="10">
+        <div class="products-panel" id="panel-${o.id}">
+          <div class="products-panel-inner">
+            <div style="display:grid;grid-template-columns:1fr 80px 160px 1fr;gap:10px;padding:4px 0 6px;border-bottom:1px solid var(--border);margin-bottom:2px;">
+              <span style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Product</span>
+              <span style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Qty</span>
+              <span style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Stage</span>
+              <span style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;">Remark / Availability</span>
+            </div>
+            ${productLines||'<div style="font-size:12px;color:var(--text3);padding:6px 0;">No products added yet.</div>'}
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+function toggleProducts(orderId){
+  const panel=document.getElementById('panel-'+orderId);
+  const btn=document.getElementById('expbtn-'+orderId);
+  if(!panel||!btn)return;
+  const isOpen=panel.classList.contains('open');
+  panel.classList.toggle('open',!isOpen);
+  btn.classList.toggle('open',!isOpen);
+}
+function initNewForm(){
+  newItemRows=[];
+  ['f-customer','f-transporter','f-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-delivery').value='';
+  document.getElementById('f-priority').value='Normal';
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  renderItemRows();addItemRow();
+}
+function addItemRow(){
+  const id=Date.now();newItemRows.push({id,name:'',qty:'',unit:'kg',remark:''});
+  renderItemRows();setTimeout(()=>{const i=document.getElementById('item-name-'+id);if(i)i.focus();},50);
+}
+function removeItemRow(id){newItemRows=newItemRows.filter(r=>r.id!==id);renderItemRows();}
+function renderItemRows(){
+  document.getElementById('items-tbody').innerHTML=newItemRows.map(r=>`<tr>
+    <td><input type="text" id="item-name-${r.id}" value="${r.name}" placeholder="Product name" oninput="updateItemRow(${r.id},'name',this.value)"/></td>
+    <td><input type="number" style="width:80px;" value="${r.qty}" placeholder="0" oninput="updateItemRow(${r.id},'qty',this.value)"/></td>
+    <td><select onchange="updateItemRow(${r.id},'unit',this.value)" style="width:70px;">${['kg','L','units','bags','MT'].map(u=>`<option ${u===r.unit?'selected':''}>${u}</option>`).join('')}</select></td>
+    <td><input type="text" value="${r.remark||''}" placeholder="Optional remark…" oninput="updateItemRow(${r.id},'remark',this.value)" style="min-width:140px;"/></td>
+    <td><button class="remove-row" onclick="removeItemRow(${r.id})">×</button></td>
+  </tr>`).join('');
+}
+function updateItemRow(id,field,val){const r=newItemRows.find(x=>x.id===id);if(r)r[field]=val;}
+
+async function saveOrder(){
+  const customer=document.getElementById('f-customer').value.trim();
+  if(!customer){alert('Please enter a customer name.');return;}
+  const valid=newItemRows.filter(r=>r.name.trim());
+  if(!valid.length){alert('Please add at least one product.');return;}
+  const now=new Date().toISOString();
+  const order={
+    id:genId(),customer,
+    transporter:document.getElementById('f-transporter').value.trim(),
+    date:document.getElementById('f-date').value,
+    deliveryDate:document.getElementById('f-delivery').value,
+    priority:document.getElementById('f-priority').value,
+    orderNotes:document.getElementById('f-notes').value.trim(),
+    items:valid.map(r=>({id:Date.now()+Math.random(),name:r.name.trim(),qty:r.qty+' '+r.unit,remark:r.remark||'',avail:null,stage:0,notes:[]})),
+    createdAt:now,updatedAt:now
+  };
+  orders.unshift(order);saveLocal();
+  toast('Work order '+order.id+' created');showPage('orders');
+  await pushToSheet(order);
+}
+
+/* ---- DETAIL ---- */
+function openDetail(id){
+  currentOrderId=id;
+  const order=orders.find(o=>o.id===id);if(!order)return;
+  document.getElementById('detail-topbar-title').textContent=order.id+' — '+order.customer;
+  document.getElementById('detail-delete-btn').onclick=()=>deleteOrder(id);
+  renderDetail();showPage('detail');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+}
+function renderDetail(){
+  const order=orders.find(o=>o.id===currentOrderId);if(!order)return;
+  const st=orderStatus(order);
+  const done=order.items.filter(it=>it.stage>=STAGES.length-1).length;
+  const active=order.items.filter(it=>it.stage>0&&it.stage<STAGES.length-1).length;
+  const pending=order.items.filter(it=>it.stage===0).length;
+  let h=`
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      ${statusBadgeHtml(st)}${priorityBadgeHtml(order.priority)}
+      <select style="width:auto;padding:5px 8px;font-size:12px;" onchange="updateOrderPriority(this.value)">
+        ${['Normal','High','Urgent'].map(p=>`<option ${p===order.priority?'selected':''}>${p}</option>`).join('')}
+      </select>
+    </div>
+    <span style="font-size:12px;color:var(--text3);">Created ${fmtDate(order.date)}</span>
+  </div>
+  <div class="detail-grid">
+    <div class="detail-field"><div class="detail-field-label">Customer</div><div class="detail-field-val">${order.customer}</div></div>
+    <div class="detail-field"><div class="detail-field-label">Transporter</div><div class="detail-field-val">${order.transporter||'—'}</div></div>
+    <div class="detail-field"><div class="detail-field-label">Order date</div><div class="detail-field-val">${fmtDate(order.date)}</div></div>
+    <div class="detail-field"><div class="detail-field-label">Est. delivery</div><div class="detail-field-val" style="${order.deliveryDate?'':'color:var(--text3);'}">${fmtDate(order.deliveryDate)}</div></div>
+  </div>`;
+  if(order.orderNotes)h+=`<div style="background:var(--warn-bg);border:1px solid #f0d8a0;border-radius:var(--radius);padding:10px 14px;margin-bottom:16px;font-size:13px;color:var(--warn);"><strong>Note:</strong> ${order.orderNotes}</div>`;
+  h+=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;">
+    <div class="stat-card"><div class="stat-label">Items</div><div class="stat-val">${order.items.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Done</div><div class="stat-val" style="color:var(--success)">${done}</div></div>
+    <div class="stat-card"><div class="stat-label">Active</div><div class="stat-val" style="color:var(--accent)">${active}</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-val" style="color:var(--text2)">${pending}</div></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div style="font-size:13px;font-weight:500;">Products</div>
+    <button class="btn btn-ghost btn-sm" onclick="openAddItemModal()">+ Add product</button>
+  </div>`;
+  h+=order.items.map(it=>{
+    const atEnd=it.stage>=STAGES.length-1;
+    const itStatus=atEnd?'Done':it.stage===0?'Pending':'Active';
+    const availHtml=it.avail===null?`<span class="badge badge-pending">Not checked yet</span>`:`<span class="badge ${AVAIL_BADGE[it.avail]}">${AVAIL[it.avail]}</span>`;
+    const availControl=`<select class="btn btn-ghost btn-sm" style="padding:5px 8px;" onchange="setAvail('${it.id}',this.value)">
+      <option value="" ${it.avail===null?'selected':''} disabled>Set availability…</option>
+      ${AVAIL.map((a,i)=>`<option value="${i}" ${i===it.avail?'selected':''}>${a}</option>`).join('')}
+    </select>`;
+    return`<div class="item-card">
+      <div class="item-card-head">
+        <div>
+          <div class="item-name">${it.name}</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:3px;">
+            <span style="font-size:12px;color:var(--text2);">Qty: <strong style="color:var(--text)">${it.qty}</strong></span>${availHtml}
+          </div>
+          <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
+            <span style="font-size:11px;font-weight:500;color:var(--text3);white-space:nowrap;">Remark:</span>
+            <input type="text" value="${(it.remark||'').replace(/"/g,'&quot;')}" placeholder="No remark" style="font-size:12px;color:var(--text);background:transparent;border:none;border-bottom:1px dashed var(--border2);padding:1px 4px;outline:none;min-width:180px;flex:1;" onchange="setRemark('${it.id}',this.value)" title="Click to edit remark"/>
+          </div>
+        </div>
+        ${statusBadgeHtml(itStatus)}
+      </div>
+      <div class="item-card-body">
+        ${stageTrackHtml(it.stage)}
+        <div class="item-controls">
+          <button class="btn btn-ghost btn-sm" onclick="goBackItem('${it.id}')" ${it.stage===0?'disabled':''} style="${it.stage===0?'opacity:.35;cursor:not-allowed;':''}">← Back</button>
+          <button class="btn btn-ghost btn-sm" onclick="advanceItem('${it.id}')" ${atEnd?'disabled':''} style="${atEnd?'opacity:.4;cursor:not-allowed;':''}">
+            ${atEnd?'✓ Complete':'→ Advance stage'}
+          </button>
+          ${availControl}
+          <button class="btn btn-danger btn-sm" onclick="removeItem('${it.id}')">Remove</button>
+        </div>
+      </div>
+      <div class="notes-area">
+        <div style="font-size:11px;font-weight:500;color:var(--text3);margin-bottom:6px;">Notes${it.notes.length?' ('+it.notes.length+')':''}</div>
+        <div class="note-list">${it.notes.length===0?'<div style="font-size:12px;color:var(--text3);margin-bottom:6px;">No notes yet.</div>':
+          it.notes.map(n=>`<div class="note-entry"><div class="note-avatar">FM</div><div><div class="note-bubble">${n.text}</div><div class="note-time">${n.time}</div></div></div>`).join('')}
+        </div>
+        <div class="note-input-row">
+          <input type="text" id="ni-${it.id}" placeholder="Add a note and press Enter…" onkeydown="if(event.key==='Enter')saveNote('${it.id}')"/>
+          <button class="note-send" onclick="saveNote('${it.id}')">Send</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('detail-body').innerHTML=h;
+}
+async function touchOrder(){
+  const o=orders.find(o=>o.id===currentOrderId);if(!o)return;
+  o.updatedAt=new Date().toISOString();saveLocal();await pushToSheet(o);
+}
+async function advanceItem(itemId){
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  const it=o.items.find(x=>String(x.id)===String(itemId));
+  if(it&&it.stage<STAGES.length-1){it.stage++;toast('Stage: '+STAGES[it.stage]);await touchOrder();renderDetail();}
+}
+async function goBackItem(itemId){
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  const it=o.items.find(x=>String(x.id)===String(itemId));
+  if(it&&it.stage>0){it.stage--;toast('Back to: '+STAGES[it.stage]);await touchOrder();renderDetail();}
+}
+async function setAvail(itemId,val){
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  const it=o.items.find(x=>String(x.id)===String(itemId));
+  if(it){it.avail=parseInt(val);await touchOrder();renderDetail();}
+}
+async function setRemark(itemId,val){
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  const it=o.items.find(x=>String(x.id)===String(itemId));
+  if(it){it.remark=val;await touchOrder();}
+}
+async function removeItem(itemId){
+  if(!confirm('Remove this product?'))return;
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  o.items=o.items.filter(x=>String(x.id)!==String(itemId));
+  toast('Product removed');await touchOrder();renderDetail();
+}
+async function saveNote(itemId){
+  const inp=document.getElementById('ni-'+itemId);
+  if(!inp||!inp.value.trim())return;
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  const it=o.items.find(x=>String(x.id)===String(itemId));if(!it)return;
+  const now=new Date();
+  it.notes.push({text:inp.value.trim(),time:now.toLocaleDateString('en-IN',{day:'numeric',month:'short'})+', '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',hour12:true})});
+  inp.value='';await touchOrder();renderDetail();
+}
+async function updateOrderPriority(val){
+  const o=orders.find(x=>x.id===currentOrderId);
+  if(o){o.priority=val;await touchOrder();renderDetail();}
+}
+async function deleteOrder(id){
+  if(!confirm('Delete this work order? This cannot be undone.'))return;
+  orders=orders.filter(o=>o.id!==id);saveLocal();toast('Order deleted');
+  await deleteFromSheet(id);showPage('orders');
+}
+async function openAddItemModal(){
+  const name=prompt('Product name:');if(!name||!name.trim())return;
+  const qty=prompt('Quantity (e.g. 200 kg):');
+  const remark=prompt('Remark (optional — press Enter to skip):');
+  const o=orders.find(x=>x.id===currentOrderId);if(!o)return;
+  o.items.push({id:Date.now(),name:name.trim(),qty:qty||'—',remark:remark||'',avail:null,stage:0,notes:[]});
+  toast('Product added');await touchOrder();renderDetail();
+}
+
+/* ---- SEED ---- */
+function seedData(){
+  if(orders.length)return;
+  const now=new Date().toISOString();
+  orders=[
+    {id:'WO-2024-001',customer:'Reliance Industries Ltd.',transporter:'Blue Dart',date:'2024-05-14',deliveryDate:'2024-05-28',priority:'High',orderNotes:'Deliver before end of month',createdAt:now,updatedAt:now,
+     items:[{id:1,name:'Epoxy Hardener 40T',qty:'500 kg',avail:0,stage:4,notes:[{text:'Delivered to Gate 2',time:'14 May, 2:10 pm'}]},
+            {id:2,name:'Surface Coating RX',qty:'200 kg',avail:1,stage:2,notes:[{text:'Lab recipe assigned to Raju',time:'14 May, 11:30 am'}]},
+            {id:3,name:'PU Foam Base Mix',qty:'300 kg',avail:2,stage:1,notes:[{text:'Batch scheduled for Friday',time:'13 May, 4:45 pm'}]},
+            {id:4,name:'Solvent Thinner S9',qty:'100 L',avail:null,stage:0,notes:[]}]},
+    {id:'WO-2024-002',customer:'Tata Chemicals',transporter:'DTDC',date:'2024-05-17',deliveryDate:'2024-05-30',priority:'Urgent',orderNotes:'',createdAt:now,updatedAt:now,
+     items:[{id:5,name:'Industrial Primer X',qty:'1000 kg',avail:1,stage:2,notes:[]},{id:6,name:'Adhesive Base HM',qty:'250 kg',avail:null,stage:1,notes:[]}]},
+    {id:'WO-2024-003',customer:'Asian Paints',transporter:'',date:'2024-05-19',deliveryDate:'',priority:'Normal',orderNotes:'',createdAt:now,updatedAt:now,
+     items:[{id:7,name:'White Cement Compound',qty:'800 kg',avail:null,stage:0,notes:[]}]},
+  ];saveLocal();
+}
+
+seedData();initBanner();renderStats();renderOrdersTable();
+if(scriptUrl)syncFromSheet();
+setInterval(()=>{if(scriptUrl&&!syncInProgress)syncFromSheet();},60000);
+</script>
+</body>
+</html>
